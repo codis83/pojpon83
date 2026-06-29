@@ -417,14 +417,14 @@ function findUF(name){
 
     const cible = normalize(name);
 
-    // 1 - correspondance exacte
+    // correspondance exacte
     for(const k in source){
         if(normalize(k)===cible){
             return source[k];
         }
     }
 
-    // 2 - on retire CI/CIS
+    // sans CIS / CI
     const cibleSimple = cible
         .replace(/^CIS\s+/,"")
         .replace(/^CI\s+/,"");
@@ -440,20 +440,15 @@ function findUF(name){
         }
     }
 
-    // 3 - contient le même nom
-    for(const k in source){
-
-        const cle = normalize(k)
-            .replace(/^CIS\s+/,"")
-            .replace(/^CI\s+/,"");
-
-        if(cibleSimple.includes(cle) || cle.includes(cibleSimple)){
-            return source[k];
-        }
-    }
-
     return null;
 }
+
+const ALIAS = {
+    "Sabran": "CIS SABRAN",
+    "Porquerolles": "CIS PORQUEROLLES",
+    "Port Cros": "CIS PORT CROS",
+    "Gassin": "CIS GASSIN"
+};
 
 // ===== RENDER
 function render(data){
@@ -467,30 +462,24 @@ function render(data){
 
 (data||[]).forEach(c=>{
 
-    const ALIAS = {
-        "Sabran": "CIS SABRAN"
-    };
 
-    const nom = c.name || ALIAS[c.abbrev] || c.abbrev;
+    let nom = c.name || c.abbrev;
 
-if (c.abbrev === "Sabran") {
-    console.log("nom =", nom);
-    console.log("uf =", findUF(nom));
+if (ALIAS[nom]) {
+    nom = ALIAS[nom];
 }
+
 
     if(!nom) return;
 
     const nameUpper = normalize(nom);
 
-    if(filterText && !nameUpper.toLowerCase().includes(filterText)) return;
-if(
-    filterCisCodis &&
-    !(
-        nameUpper.startsWith("CI ") ||
-        nameUpper.startsWith("CIS ") ||
-        nameUpper.startsWith("CODIS")
-    )
-){
+const uf = findUF(nom);
+
+if(filterText && !nameUpper.toLowerCase().includes(filterText)) return;
+
+// ===== Filtre "Avec seuils"
+if (filterCisCodis && !uf) {
     return;
 }
 
@@ -503,8 +492,6 @@ if(selectedGroup){
     }
 
 }
-
-    const uf=findUF(nom);
 
     const inter=c.disponibilities?.[0]||0;
     const d0=c.disponibilities?.[1]||0;
